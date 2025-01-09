@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Chess Game</title>
+  <style>
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, 50px);
+      grid-template-rows: repeat(8, 50px);
+    }
+    .square {
+      width: 50px;
+      height: 50px;
+    }
+    .white { background-color: #fff; }
+    .black { background-color: #000; color: #fff; }
+    .piece { font-size: 32px; text-align: center; line-height: 50px; }
+  </style>
+</head>
+<body>
+  <div class="board" id="board"></div>
+
+  <script>
+    const boardElement = document.getElementById("board");
+
+    const board = [
+      ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"],
+      ["♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"],
+      ["", "", "", "", "", "", "", ""],
+      ["", "", "", "", "", "", "", ""],
+      ["", "", "", "", "", "", "", ""],
+      ["", "", "", "", "", "", "", ""],
+      ["♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"],
+      ["♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"],
+    ];
+
+    function renderBoard() {
+      boardElement.innerHTML = "";
+      board.forEach((row, i) => {
+        row.forEach((piece, j) => {
+          const square = document.createElement("div");
+          square.className = "square " + ((i + j) % 2 === 0 ? "white" : "black");
+          square.innerHTML = piece ? `<span class="piece">${piece}</span>` : "";
+          boardElement.appendChild(square);
+        });
+      });
+    }
+
+    renderBoard();
+  </script>
+</body>
+</html>
