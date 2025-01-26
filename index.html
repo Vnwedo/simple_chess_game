@@ -1,31 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Simple Chess Game</title>
   <style>
+    /* Center the board and make it bigger */
     .board {
       display: grid;
-      grid-template-columns: repeat(8, 50px);
-      grid-template-rows: repeat(8, 50px);
+      grid-template-columns: repeat(8, 80px);
+      grid-template-rows: repeat(8, 80px);
+      margin: 80px auto;
+      border: 10px solid #347b91;
     }
     .square {
-      width: 50px;
-      height: 50px;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      cursor: pointer;
     }
-    .white { background-color: #fff; }
-    .black { background-color: #000; color: #fff; }
-    .piece { font-size: 32px; text-align: center; line-height: 50px; }
+    .white {
+      background-color: #fff;
+    }
+    .black {
+      background-color: #000;
+      color: #fff;
+    }
+    .piece {
+      font-size: 40px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <h1 style="text-align: center;">Simple Chess Game</h1>
   <div class="board" id="board"></div>
 
   <script>
     const boardElement = document.getElementById("board");
 
-    const board = [
+    // Chessboard initial state
+    let board = [
       ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"],
       ["♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"],
       ["", "", "", "", "", "", "", ""],
@@ -36,18 +54,61 @@
       ["♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"],
     ];
 
+    let selectedPiece = null;     // Holds the currently selected piece
+    let selectedPosition = null;  // Holds the position of the selected piece
+
+    // Render the board
     function renderBoard() {
-      boardElement.innerHTML = "";
+      boardElement.innerHTML = ""; // Clear the board
+
       board.forEach((row, i) => {
         row.forEach((piece, j) => {
           const square = document.createElement("div");
           square.className = "square " + ((i + j) % 2 === 0 ? "white" : "black");
-          square.innerHTML = piece ? `<span class="piece">${piece}</span>` : "";
+          square.dataset.row = i; // Store row & col for reference
+          square.dataset.col = j;
+
+          if (piece) {
+            const pieceElement = document.createElement("span");
+            pieceElement.className = "piece";
+            pieceElement.textContent = piece;
+            square.appendChild(pieceElement);
+          }
+
+          // Attach the click event to each square
+          square.addEventListener("click", () => handleSquareClick(i, j));
           boardElement.appendChild(square);
         });
       });
     }
 
+    // Handle square clicks
+    function handleSquareClick(row, col) {
+      const piece = board[row][col];
+
+      if (selectedPiece) {
+        // If we're clicking the same square that is already selected, just deselect
+        if (row === selectedPosition.row && col === selectedPosition.col) {
+          selectedPiece = null;
+          selectedPosition = null;
+          return; // Don't move or re-render since nothing changed
+        }
+
+        // Otherwise, move the selected piece to this new square
+        board[row][col] = selectedPiece;
+        board[selectedPosition.row][selectedPosition.col] = "";
+        selectedPiece = null;
+        selectedPosition = null;
+        renderBoard();
+
+      } else if (piece) {
+        // If no piece is selected, select this piece
+        selectedPiece = piece;
+        selectedPosition = { row, col };
+      }
+    }
+
+    // Initial render
     renderBoard();
   </script>
 </body>
