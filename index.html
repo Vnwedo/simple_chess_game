@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Simple Chess Game</title>
+  <title>Simple Chess Game with Pawn Rules</title>
   <style>
     /* Center the board and make it bigger */
     .board {
       display: grid;
       grid-template-columns: repeat(8, 80px);
       grid-template-rows: repeat(8, 80px);
-      margin: 80px auto;
-      border: 10px solid #347b91;
+      margin: 20px auto;
+      border: 2px solid #333;
     }
     .square {
       width: 80px;
@@ -36,36 +36,129 @@
   </style>
 </head>
 <body>
-  <h1 style="text-align: center;">Simple Chess Game</h1>
+  <h1 style="text-align: center;">Simple Chess Game (Basic Pawn Rules)</h1>
   <div class="board" id="board"></div>
 
   <script>
     const boardElement = document.getElementById("board");
 
-    // Chessboard initial state
+    // Initial chessboard state.
+    // (We use the Unicode black/white chess symbols directly.)
     let board = [
       ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"],
       ["♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"],
-      ["", "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
+      ["",   "",   "",   "",   "",   "",   "",   ""],
+      ["",   "",   "",   "",   "",   "",   "",   ""],
+      ["",   "",   "",   "",   "",   "",   "",   ""],
+      ["",   "",   "",   "",   "",   "",   "",   ""],
       ["♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"],
-      ["♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"],
+      ["♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"]
     ];
 
-    let selectedPiece = null;     // Holds the currently selected piece
-    let selectedPosition = null;  // Holds the position of the selected piece
+    let selectedPiece = null;     // The currently selected piece (e.g. "♙")
+    let selectedPosition = null;  // The { row, col } of the selected piece
 
-    // Render the board
+    // Helper: Is this piece white?
+    function isWhitePiece(piece) {
+      // Basic check using Unicode set for white pieces
+      return ["♙","♖","♘","♗","♕","♔"].includes(piece);
+    }
+
+    // Helper: Is this piece black?
+    function isBlackPiece(piece) {
+      // Basic check using Unicode set for black pieces
+      return ["♟","♜","♞","♝","♛","♚"].includes(piece);
+    }
+
+    // Helper: Is this a white pawn?
+    function isWhitePawn(piece) {
+      return piece === "♙";
+    }
+
+    // Helper: Is this a black pawn?
+    function isBlackPawn(piece) {
+      return piece === "♟";
+    }
+
+    /**
+     * Validate pawn moves.
+     * 
+     * Returns true if a pawn move from (startRow, startCol) 
+     * to (endRow, endCol) is LEGAL based on basic pawn rules:
+     *  - 1 step forward if empty
+     *  - 2 steps forward if empty and on the starting row
+     *  - capture diagonally forward if there's an opponent piece
+     */
+    function isValidPawnMove(startRow, startCol, endRow, endCol, piece, board) {
+      // White pawns move from bottom (row 6) to top (row 0).
+      if (isWhitePawn(piece)) {
+        // Move forward (same col) by 1 if empty
+        if (endCol === startCol && board[endRow][endCol] === "") {
+          // One step forward
+          if (endRow === startRow - 1) {
+            return true;
+          }
+          // Two steps forward from the initial row (row 6)
+          if (startRow === 6 && endRow === 4) {
+            // Check the squares in front are empty (row 5 and row 4)
+            if (board[5][endCol] === "" && board[4][endCol] === "") {
+              return true;
+            }
+          }
+        }
+
+        // Capture diagonally: row - 1, col +/- 1 if there's a black piece
+        if ((endRow === startRow - 1) && (Math.abs(endCol - startCol) === 1)) {
+          if (isBlackPiece(board[endRow][endCol])) {
+            return true;
+          }
+        }
+
+        return false; // No other moves allowed
+      }
+
+      // Black pawns move from top (row 1) to bottom (row 7).
+      if (isBlackPawn(piece)) {
+        // Move forward (same col) by 1 if empty
+        if (endCol === startCol && board[endRow][endCol] === "") {
+          // One step forward
+          if (endRow === startRow + 1) {
+            return true;
+          }
+          // Two steps forward from the initial row (row 1)
+          if (startRow === 1 && endRow === 3) {
+            // Check the squares in front are empty (row 2 and row 3)
+            if (board[2][endCol] === "" && board[3][endCol] === "") {
+              return true;
+            }
+          }
+        }
+
+        // Capture diagonally: row + 1, col +/- 1 if there's a white piece
+        if ((endRow === startRow + 1) && (Math.abs(endCol - startCol) === 1)) {
+          if (isWhitePiece(board[endRow][endCol])) {
+            return true;
+          }
+        }
+
+        return false; // No other moves allowed
+      }
+
+      // If it's not a pawn, ignore the special pawn rules here
+      // (You can expand similarly for rooks, knights, etc.)
+      return true;
+    }
+
+    // Render the board in the DOM
     function renderBoard() {
-      boardElement.innerHTML = ""; // Clear the board
+      boardElement.innerHTML = ""; // Clear the board first
 
       board.forEach((row, i) => {
         row.forEach((piece, j) => {
           const square = document.createElement("div");
+          // Alternate coloring (i+j even => white, otherwise black)
           square.className = "square " + ((i + j) % 2 === 0 ? "white" : "black");
-          square.dataset.row = i; // Store row & col for reference
+          square.dataset.row = i;
           square.dataset.col = j;
 
           if (piece) {
@@ -75,40 +168,67 @@
             square.appendChild(pieceElement);
           }
 
-          // Attach the click event to each square
+          // Attach the click event
           square.addEventListener("click", () => handleSquareClick(i, j));
           boardElement.appendChild(square);
         });
       });
     }
 
-    // Handle square clicks
+    // Handle clicking any square
     function handleSquareClick(row, col) {
       const piece = board[row][col];
 
+      // If a piece is already selected...
       if (selectedPiece) {
-        // If we're clicking the same square that is already selected, just deselect
+        // Clicking the same square => deselect
         if (row === selectedPosition.row && col === selectedPosition.col) {
           selectedPiece = null;
           selectedPosition = null;
-          return; // Don't move or re-render since nothing changed
+          return;
         }
 
-        // Otherwise, move the selected piece to this new square
-        board[row][col] = selectedPiece;
-        board[selectedPosition.row][selectedPosition.col] = "";
+        // We are attempting to move selectedPiece from selectedPosition => (row, col).
+        const startRow = selectedPosition.row;
+        const startCol = selectedPosition.col;
+        const endRow   = row;
+        const endCol   = col;
+
+        // If it's a pawn, check if it's a valid pawn move
+        // If it's not a pawn, we skip the check (like the old code).
+        if (isWhitePawn(selectedPiece) || isBlackPawn(selectedPiece)) {
+          // If not a valid pawn move, do nothing (or show an alert).
+          if (!isValidPawnMove(startRow, startCol, endRow, endCol, selectedPiece, board)) {
+            alert("Invalid pawn move!");
+            return;
+          }
+        }
+
+        // If there's already a piece of the SAME color on (row, col), prevent capturing your own piece.
+        if (piece && ((isWhitePiece(selectedPiece) && isWhitePiece(piece)) ||
+                      (isBlackPiece(selectedPiece) && isBlackPiece(piece)))) {
+          alert("You cannot capture your own piece!");
+          return;
+        }
+
+        // Otherwise, move the piece
+        board[endRow][endCol] = selectedPiece;
+        board[startRow][startCol] = "";
+
+        // Reset selection
         selectedPiece = null;
         selectedPosition = null;
-        renderBoard();
 
-      } else if (piece) {
-        // If no piece is selected, select this piece
+        renderBoard(); // Re-render with the updated positions
+      } 
+      // If nothing is selected yet, and there's a piece on the clicked square, select it.
+      else if (piece) {
         selectedPiece = piece;
         selectedPosition = { row, col };
       }
     }
 
-    // Initial render
+    // Initial render of the board
     renderBoard();
   </script>
 </body>
