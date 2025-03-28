@@ -72,7 +72,3 @@ The chessboard is represented using a text-based grid. Each square is displayed 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or open issues.
-
-## License
-
-This project is licensed under the [License Name - e.g., MIT] License.
